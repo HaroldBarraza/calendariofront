@@ -11,7 +11,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const x = UserIcon
+  console.log(x);
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
