@@ -1,45 +1,57 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown, LogOut, Menu, User as UserIcon } from 'lucide-react';
-import { useAuth } from '../../hooks/useAuth';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Bell,
+  ChevronDown,
+  LogOut,
+  Menu,
+  User as UserIcon,
+} from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  collapsed?: boolean;
 }
 
-export function Header({ onToggleSidebar }: HeaderProps) {
+export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const x = UserIcon
+  const x = UserIcon;
   console.log(x);
   const handleLogout = async () => {
     await logout();
-    navigate('/login', { replace: true });
+    navigate("/login", { replace: true });
   };
 
   const initials =
     user?.fullName
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
       .slice(0, 2)
-      .join('')
-      .toUpperCase() ?? '??';
+      .join("")
+      .toUpperCase() ?? "??";
 
   return (
     <header className="flex h-18 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"
-          aria-label="Abrir menú"
+          className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+          aria-label="Alternar menú"
         >
-          <Menu className="h-5 w-5" />
+          {collapsed ? (
+            <PanelLeftOpen className="h-5 w-5" />
+          ) : (
+            <PanelLeftClose className="h-5 w-5" />
+          )}
         </button>
         <div className="hidden h-7 w-px bg-slate-200 sm:block" />
         <div>
           <p className="text-sm font-semibold text-slate-900">
-            Hola, {user?.fullName.split(' ')[0] ?? 'usuario'}
+            Hola, {user?.fullName.split(" ")[0] ?? "usuario"}
           </p>
           <p className="hidden text-xs text-slate-500 sm:block">
             Aquí tienes el resumen de tu planificación.
@@ -67,7 +79,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               {initials}
             </div>
             <div className="hidden text-left sm:block">
-              <p className="text-xs font-semibold text-slate-900">{user?.fullName}</p>
+              <p className="text-xs font-semibold text-slate-900">
+                {user?.fullName}
+              </p>
               <p className="text-[11px] text-slate-500">{user?.role}</p>
             </div>
             <ChevronDown className="hidden h-4 w-4 text-slate-400 sm:block" />
@@ -81,8 +95,12 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               />
               <div className="absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
                 <div className="border-b border-slate-100 px-4 py-3">
-                  <p className="text-xs font-semibold text-slate-900">{user?.fullName}</p>
-                  <p className="truncate text-[11px] text-slate-500">{user?.email}</p>
+                  <p className="text-xs font-semibold text-slate-900">
+                    {user?.fullName}
+                  </p>
+                  <p className="truncate text-[11px] text-slate-500">
+                    {user?.email}
+                  </p>
                 </div>
                 <button
                   onClick={() => {

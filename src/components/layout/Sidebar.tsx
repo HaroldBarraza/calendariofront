@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   CalendarDays,
@@ -43,25 +44,33 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
   const role = useAuthStore((s) => s.user?.role);
   const visible = ITEMS.filter((i) => !i.roles || (role && i.roles.includes(role)));
 
+  // Estado local de hover (solo aplica cuando collapsed=true)
+  const [hovered, setHovered] = useState(false);
+  const expanded = !collapsed || hovered;
+  const floating = collapsed && hovered;
+
   return (
     <aside
+      onMouseEnter={() => collapsed && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={cn(
         'flex h-full flex-col border-r border-slate-200 bg-white py-5 transition-all duration-200 ease-in-out',
-        collapsed ? 'w-18 px-2' : 'w-66 px-4',
+        expanded ? 'w-[264px] px-4' : 'w-[72px] px-2',
+        floating && 'absolute inset-y-0 left-0 z-30 shadow-2xl shadow-slate-900/10',
       )}
     >
       {/* Logo */}
       <div
         className={cn(
           'flex items-center',
-          collapsed ? 'justify-center' : 'justify-between px-2',
+          expanded ? 'justify-between px-2' : 'justify-center',
         )}
       >
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
             <Sparkles className="h-5 w-5" />
           </div>
-          {!collapsed && (
+          {expanded && (
             <div>
               <p className="text-sm font-bold tracking-tight text-slate-950">
                 Planifica<span className="text-blue-600">.app</span>
@@ -72,7 +81,7 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
             </div>
           )}
         </div>
-        {onClose && !collapsed && (
+        {onClose && expanded && (
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
@@ -84,15 +93,22 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
       </div>
 
       {/* Sección Workspace */}
-      <div className={cn('mt-10', collapsed ? 'h-3' : 'px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400')}>
-        {!collapsed && 'Workspace'}
+      <div
+        className={cn(
+          'mt-10',
+          expanded
+            ? 'px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400'
+            : 'h-3',
+        )}
+      >
+        {expanded && 'Workspace'}
       </div>
 
       {/* Navegación */}
       <nav
         className={cn(
           'mt-3 space-y-1',
-          collapsed && 'flex flex-col items-center',
+          !expanded && 'flex flex-col items-center',
         )}
       >
         {visible.map(({ to, label, icon: Icon }) => (
@@ -100,13 +116,13 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
             key={to}
             to={to}
             onClick={onNavigate}
-            title={collapsed ? label : undefined}
+            title={!expanded ? label : undefined}
             className={({ isActive }) =>
               cn(
                 'group relative flex items-center rounded-xl font-medium transition-all',
-                collapsed
-                  ? 'h-11 w-11 justify-center'
-                  : 'w-full gap-3 px-3 py-2.5 text-left text-sm',
+                expanded
+                  ? 'w-full gap-3 px-3 py-2.5 text-left text-sm'
+                  : 'h-11 w-11 justify-center',
                 isActive
                   ? 'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
@@ -117,11 +133,13 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
               <>
                 <Icon
                   className={cn(
-                    'h-4.5 w-4.5 shrink-0',
-                    isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600',
+                    'h-[18px] w-[18px] shrink-0',
+                    isActive
+                      ? 'text-blue-600'
+                      : 'text-slate-400 group-hover:text-slate-600',
                   )}
                 />
-                {!collapsed && (
+                {expanded && (
                   <>
                     {label}
                     {isActive && (
@@ -129,7 +147,7 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
                     )}
                   </>
                 )}
-                {collapsed && isActive && (
+                {!expanded && isActive && (
                   <span className="absolute -right-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-blue-600" />
                 )}
               </>
@@ -142,13 +160,16 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
       <div
         className={cn(
           'mt-auto border-t border-slate-100 pt-4',
-          collapsed && 'flex justify-center',
+          !expanded && 'flex justify-center',
         )}
       >
-        {collapsed ? (
-          <div className="h-2 w-2 rounded-full bg-slate-200" title="Planifica.app v1.0" />
-        ) : (
+        {expanded ? (
           <p className="text-[10px] text-slate-400">Planifica.app v1.0</p>
+        ) : (
+          <div
+            className="h-2 w-2 rounded-full bg-slate-200"
+            title="Planifica.app v1.0"
+          />
         )}
       </div>
     </aside>
