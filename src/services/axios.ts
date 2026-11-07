@@ -2,7 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../stores/auth.store';
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: 'https://calendarioback-jv3j.onrender.com/api',
   withCredentials: true,
 });
 
