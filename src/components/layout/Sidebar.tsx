@@ -1,0 +1,115 @@
+import { NavLink } from 'react-router-dom';
+import {
+  CalendarDays,
+  ClipboardList,
+  LayoutDashboard,
+  Building2,
+  MapPin,
+  Map,
+  Users,
+  FileText,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import { useAuthStore } from '../../stores/auth.store';
+import { cn } from '../../lib/utils';
+import type { Role } from '../../types/api';
+
+interface NavItem {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: Role[];
+}
+
+const ITEMS: NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/calendar', label: 'Calendario', icon: CalendarDays },
+  { to: '/activities', label: 'Actividades', icon: ClipboardList },
+  { to: '/organizations', label: 'Organizaciones', icon: Building2 },
+  { to: '/neighborhoods', label: 'Barrios', icon: Map },
+  { to: '/places', label: 'Lugares', icon: MapPin },
+  { to: '/users', label: 'Usuarios', icon: Users, roles: ['ADMIN'] },
+  { to: '/reports', label: 'Reportes', icon: FileText },
+];
+
+export function Sidebar({
+  onNavigate,
+  onClose,
+}: {
+  onNavigate?: () => void;
+  onClose?: () => void;
+}) {
+  const role = useAuthStore((s) => s.user?.role);
+  const visible = ITEMS.filter((i) => !i.roles || (role && i.roles.includes(role)));
+
+  return (
+    <aside className="flex h-full w-[264px] flex-col border-r border-slate-200 bg-white px-4 py-5">
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-bold tracking-tight text-slate-950">
+              Planifica<span className="text-blue-600">.app</span>
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+              Gestión 2027
+            </p>
+          </div>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
+            aria-label="Cerrar menú"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      <div className="mt-10 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
+        Workspace
+      </div>
+
+      <nav className="mt-3 space-y-1">
+        {visible.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              cn(
+                'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all',
+                isActive
+                  ? 'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
+              )
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <Icon
+                  className={cn(
+                    'h-[18px] w-[18px]',
+                    isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600',
+                  )}
+                />
+                {label}
+                {isActive && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-600" />
+                )}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
+
+      <div className="mt-auto border-t border-slate-100 pt-4 text-[10px] text-slate-400">
+        <p>Planifica.app v1.0</p>
+      </div>
+    </aside>
+  );
+}
