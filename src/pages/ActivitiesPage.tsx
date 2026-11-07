@@ -428,7 +428,7 @@ export function ActivitiesPage() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <h2 className="min-w-[130px] text-center text-sm font-bold text-slate-900">
+          <h2 className="min-w-32.5 text-center text-sm font-bold text-slate-900">
             {MONTHS[currentMonth.month - 1]} {currentMonth.year}
           </h2>
           <button
@@ -446,7 +446,7 @@ export function ActivitiesPage() {
           </button>
         </div>
         <div className="flex flex-1 flex-wrap gap-2 xl:justify-end">
-          <div className="relative min-w-[180px] flex-1 xl:max-w-[220px]">
+          <div className="relative min-w-45 flex-1 xl:max-w-55">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="search"
@@ -527,7 +527,7 @@ export function ActivitiesPage() {
                 key={cell.key}
                 onClick={() => setDayKey(cell.key)}
                 className={cn(
-                  'group relative min-h-[100px] border-b border-r border-slate-100 p-2 text-left transition hover:bg-slate-50/80 sm:min-h-[122px]',
+                  'group relative min-h-25 border-b border-r border-slate-100 p-2 text-left transition hover:bg-slate-50/80 sm:min-h-30.5',
                   !cell.inMonth && 'bg-slate-50/40',
                   isToday && 'bg-blue-50/30 ring-2 ring-inset ring-blue-500',
                 )}
@@ -961,7 +961,7 @@ export function ActivitiesPage() {
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-60 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <div

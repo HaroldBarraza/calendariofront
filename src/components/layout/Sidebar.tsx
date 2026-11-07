@@ -33,33 +33,46 @@ const ITEMS: NavItem[] = [
   { to: '/reports', label: 'Reportes', icon: FileText },
 ];
 
-export function Sidebar({
-  onNavigate,
-  onClose,
-}: {
+interface SidebarProps {
+  collapsed?: boolean;
   onNavigate?: () => void;
   onClose?: () => void;
-}) {
+}
+
+export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps) {
   const role = useAuthStore((s) => s.user?.role);
   const visible = ITEMS.filter((i) => !i.roles || (role && i.roles.includes(role)));
 
   return (
-    <aside className="flex h-full w-[264px] flex-col border-r border-slate-200 bg-white px-4 py-5">
-      <div className="flex items-center justify-between px-2">
+    <aside
+      className={cn(
+        'flex h-full flex-col border-r border-slate-200 bg-white py-5 transition-all duration-200 ease-in-out',
+        collapsed ? 'w-18 px-2' : 'w-66 px-4',
+      )}
+    >
+      {/* Logo */}
+      <div
+        className={cn(
+          'flex items-center',
+          collapsed ? 'justify-center' : 'justify-between px-2',
+        )}
+      >
         <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
             <Sparkles className="h-5 w-5" />
           </div>
-          <div>
-            <p className="text-sm font-bold tracking-tight text-slate-950">
-              Planifica<span className="text-blue-600">.app</span>
-            </p>
-            <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
-              Gestión 2027
-            </p>
-          </div>
+          {!collapsed && (
+            <div>
+              <p className="text-sm font-bold tracking-tight text-slate-950">
+                Planifica<span className="text-blue-600">.app</span>
+              </p>
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                Gestión 2027
+              </p>
+            </div>
+          )}
         </div>
-        {onClose && (
+        {onClose && !collapsed && (
           <button
             onClick={onClose}
             className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
@@ -70,19 +83,30 @@ export function Sidebar({
         )}
       </div>
 
-      <div className="mt-10 px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400">
-        Workspace
+      {/* Sección Workspace */}
+      <div className={cn('mt-10', collapsed ? 'h-3' : 'px-2 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-400')}>
+        {!collapsed && 'Workspace'}
       </div>
 
-      <nav className="mt-3 space-y-1">
+      {/* Navegación */}
+      <nav
+        className={cn(
+          'mt-3 space-y-1',
+          collapsed && 'flex flex-col items-center',
+        )}
+      >
         {visible.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             onClick={onNavigate}
+            title={collapsed ? label : undefined}
             className={({ isActive }) =>
               cn(
-                'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all',
+                'group relative flex items-center rounded-xl font-medium transition-all',
+                collapsed
+                  ? 'h-11 w-11 justify-center'
+                  : 'w-full gap-3 px-3 py-2.5 text-left text-sm',
                 isActive
                   ? 'bg-blue-50 text-blue-700 shadow-sm shadow-blue-100'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900',
@@ -93,13 +117,20 @@ export function Sidebar({
               <>
                 <Icon
                   className={cn(
-                    'h-[18px] w-[18px]',
+                    'h-4.5 w-4.5 shrink-0',
                     isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600',
                   )}
                 />
-                {label}
-                {isActive && (
-                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-600" />
+                {!collapsed && (
+                  <>
+                    {label}
+                    {isActive && (
+                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-blue-600" />
+                    )}
+                  </>
+                )}
+                {collapsed && isActive && (
+                  <span className="absolute -right-1 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-blue-600" />
                 )}
               </>
             )}
@@ -107,8 +138,18 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="mt-auto border-t border-slate-100 pt-4 text-[10px] text-slate-400">
-        <p>Planifica.app v1.0</p>
+      {/* Footer */}
+      <div
+        className={cn(
+          'mt-auto border-t border-slate-100 pt-4',
+          collapsed && 'flex justify-center',
+        )}
+      >
+        {collapsed ? (
+          <div className="h-2 w-2 rounded-full bg-slate-200" title="Planifica.app v1.0" />
+        ) : (
+          <p className="text-[10px] text-slate-400">Planifica.app v1.0</p>
+        )}
       </div>
     </aside>
   );

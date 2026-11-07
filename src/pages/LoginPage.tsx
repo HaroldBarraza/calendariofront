@@ -36,7 +36,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen bg-[#f7f8fc]">
       {/* Panel izquierdo (branding) - visible en desktop */}
-      <div className="hidden w-1/2 flex-col justify-between bg-gradient-to-br from-blue-600 via-blue-700 to-slate-900 p-12 text-white lg:flex">
+      <div className="hidden w-1/2 flex-col justify-between bg-linear-to-br from-blue-600 via-blue-700 to-slate-900 p-12 text-white lg:flex">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 backdrop-blur">
             <Sparkles className="h-5 w-5" />

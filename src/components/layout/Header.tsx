@@ -27,7 +27,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       .toUpperCase() ?? '??';
 
   return (
-    <header className="flex h-[72px] items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+    <header className="flex h-18 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
@@ -52,7 +52,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
           className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100"
           aria-label="Notificaciones"
         >
-          <Bell className="h-[18px] w-[18px]" />
+          <Bell className="h-4.5 w-4.5" />
           <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-600 ring-2 ring-white" />
         </button>
 
