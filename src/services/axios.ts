@@ -1,8 +1,8 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
-import { useAuthStore } from '../stores/auth.store';
+import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { useAuthStore } from "../stores/auth.store";
 
 export const api = axios.create({
-  baseURL: 'https://calendarioback-jv3j.onrender.com/api',
+  baseURL: "https://calendarioback-jv3j.onrender.com/api",
   withCredentials: true,
 });
 
@@ -25,14 +25,19 @@ function flushQueue(token: string) {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const original = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
 
     if (!original || error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
     }
 
     // No reintentar el refresh contra sí mismo
-    if (original.url?.includes('/auth/refresh') || original.url?.includes('/auth/login')) {
+    if (
+      original.url?.includes("/auth/refresh") ||
+      original.url?.includes("/auth/login")
+    ) {
       return Promise.reject(error);
     }
 
@@ -50,7 +55,7 @@ api.interceptors.response.use(
 
     try {
       const { data } = await axios.post<{ accessToken: string }>(
-        '/api/auth/refresh',
+        "https://calendarioback-jv3j.onrender.com/api/auth/refresh",
         {},
         { withCredentials: true },
       );
@@ -60,8 +65,11 @@ api.interceptors.response.use(
       return api(original);
     } catch (refreshError) {
       useAuthStore.getState().clear();
-      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.startsWith("/login")
+      ) {
+        window.location.href = "/login";
       }
       return Promise.reject(refreshError);
     } finally {
