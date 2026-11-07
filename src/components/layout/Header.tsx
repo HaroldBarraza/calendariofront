@@ -1,14 +1,7 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  Bell,
-  ChevronDown,
-  LogOut,
-  Menu,
-  User as UserIcon,
-} from "lucide-react";
-import { useAuth } from "../../hooks/useAuth";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -19,23 +12,22 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const x = UserIcon;
-  console.log(x);
+
   const handleLogout = async () => {
     await logout();
-    navigate("/login", { replace: true });
+    navigate('/login', { replace: true });
   };
 
   const initials =
     user?.fullName
-      .split(" ")
+      .split(' ')
       .map((n) => n[0])
       .slice(0, 2)
-      .join("")
-      .toUpperCase() ?? "??";
+      .join('')
+      .toUpperCase() ?? '??';
 
   return (
-    <header className="flex h-18 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+    <header className="flex h-[72px] items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
@@ -51,7 +43,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
         <div className="hidden h-7 w-px bg-slate-200 sm:block" />
         <div>
           <p className="text-sm font-semibold text-slate-900">
-            Hola, {user?.fullName.split(" ")[0] ?? "usuario"}
+            Hola, {user?.fullName.split(' ')[0] ?? 'usuario'}
           </p>
           <p className="hidden text-xs text-slate-500 sm:block">
             Aquí tienes el resumen de tu planificación.
@@ -64,7 +56,7 @@ export function Header({ onToggleSidebar, collapsed }: HeaderProps) {
           className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100"
           aria-label="Notificaciones"
         >
-          <Bell className="h-4.5 w-4.5" />
+          <Bell className="h-[18px] w-[18px]" />
           <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-blue-600 ring-2 ring-white" />
         </button>
 
