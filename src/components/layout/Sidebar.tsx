@@ -164,7 +164,7 @@ export function Sidebar({ collapsed = false, onNavigate, onClose }: SidebarProps
         )}
       >
         {expanded ? (
-          <p className="text-[10px] text-slate-400">Planifica.app v1.0</p>
+          <p className="text-[10px] text-slate-400">Estaca Bellavista 2027</p>
         ) : (
           <div
             className="h-2 w-2 rounded-full bg-slate-200"
