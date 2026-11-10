@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { Loader2, LogIn, Sparkles } from 'lucide-react';
 import { loginSchema, type LoginFormData } from '../schemas/login.schema';
 import { useAuth } from '../hooks/useAuth';
+import logo from '../../public/logo.jpg'
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -43,7 +44,7 @@ export function LoginPage() {
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden p-12 text-white lg:flex">
         {/* Imagen base */}
         <img
-          src="src\assets\725578814_1008872051499431_5792838287208812922_n.jpg"
+          src={logo}
           alt=""
           className="absolute inset-0 h-full w-full scale-105 object-cover"
           aria-hidden="true"
