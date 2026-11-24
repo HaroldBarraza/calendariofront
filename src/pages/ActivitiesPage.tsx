@@ -43,10 +43,6 @@ import type {
   Place,
 } from '../types/api';
 
-// ─────────────────────────────────────────────
-// Constantes visuales
-// ─────────────────────────────────────────────
-
 const MONTHS = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -58,35 +54,11 @@ const STATUS: Record<
   ActivityStatus,
   { label: string; dot: string; pill: string; border: string }
 > = {
-  PLANNED: {
-    label: 'Planificada',
-    dot: 'bg-blue-500',
-    pill: 'bg-blue-50 text-blue-700 ring-blue-200',
-    border: 'border-blue-500',
-  },
-  CONFIRMED: {
-    label: 'Confirmada',
-    dot: 'bg-emerald-500',
-    pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-    border: 'border-emerald-500',
-  },
-  COMPLETED: {
-    label: 'Realizada',
-    dot: 'bg-purple-500',
-    pill: 'bg-purple-50 text-purple-700 ring-purple-200',
-    border: 'border-purple-500',
-  },
-  CANCELLED: {
-    label: 'Cancelada',
-    dot: 'bg-red-500',
-    pill: 'bg-red-50 text-red-700 ring-red-200',
-    border: 'border-red-500',
-  },
+  PLANNED: { label: 'Planificada', dot: 'bg-blue-500', pill: 'bg-blue-50 text-blue-700 ring-blue-200', border: 'border-blue-500' },
+  CONFIRMED: { label: 'Confirmada', dot: 'bg-emerald-500', pill: 'bg-emerald-50 text-emerald-700 ring-emerald-200', border: 'border-emerald-500' },
+  COMPLETED: { label: 'Realizada', dot: 'bg-purple-500', pill: 'bg-purple-50 text-purple-700 ring-purple-200', border: 'border-purple-500' },
+  CANCELLED: { label: 'Cancelada', dot: 'bg-red-500', pill: 'bg-red-50 text-red-700 ring-red-200', border: 'border-red-500' },
 };
-
-// ─────────────────────────────────────────────
-// Utilidades
-// ─────────────────────────────────────────────
 
 interface Cell {
   date: Date;
@@ -126,13 +98,12 @@ function formatLongDate(key: string): string {
   return `${weekday}, ${d} de ${MONTHS[m - 1]} de ${y}`;
 }
 
-// ─────────────────────────────────────────────
-// Página principal
-// ─────────────────────────────────────────────
+type ConfirmKind = 'delete' | 'restore' | 'purge' | 'purge-all' | null;
 
 export function ActivitiesPage() {
   const role = useAuthStore((s) => s.user?.role);
   const canWrite = role === 'ADMIN' || role === 'PLANNER';
+  const isAdmin = role === 'ADMIN';
 
   const today = new Date();
   const initialMonth =
@@ -148,6 +119,7 @@ export function ActivitiesPage() {
   const debouncedSearch = useDebounce(search);
   const [statusFilter, setStatusFilter] = useState('');
   const [orgFilter, setOrgFilter] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [neighborhoods, setNeighborhoods] = useState<Neighborhood[]>([]);
@@ -155,9 +127,7 @@ export function ActivitiesPage() {
 
   useEffect(() => {
     organizationsService.list({ limit: 100, isActive: true }).then((r) => setOrgs(r.data));
-    neighborhoodsService.list({ limit: 100, isActive: true }).then((r) =>
-      setNeighborhoods(r.data),
-    );
+    neighborhoodsService.list({ limit: 100, isActive: true }).then((r) => setNeighborhoods(r.data));
     placesService.list({ limit: 100, isActive: true }).then((r) => setPlaces(r.data));
   }, []);
 
@@ -176,7 +146,7 @@ export function ActivitiesPage() {
         const res = await activitiesService.list({
           dateFrom: from,
           dateTo: to,
-          includeDeleted: true,
+          includeDeleted: showDeleted,
           page,
           limit: 100,
         });
@@ -202,7 +172,7 @@ export function ActivitiesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentMonth]);
+  }, [currentMonth, showDeleted]);
 
   useEffect(() => {
     void fetchMonth();
@@ -235,7 +205,6 @@ export function ActivitiesPage() {
     return n;
   }, [filtered]);
 
-  // Modales
   const [dayKey, setDayKey] = useState<string | null>(null);
   const [selected, setSelected] = useState<Activity | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -243,7 +212,7 @@ export function ActivitiesPage() {
   const [conflicts, setConflicts] = useState<Conflict[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState<Activity | null>(null);
-  const [confirmKind, setConfirmKind] = useState<'delete' | 'restore' | null>(null);
+  const [confirmKind, setConfirmKind] = useState<ConfirmKind>(null);
   const [acting, setActing] = useState(false);
 
   const {
@@ -260,7 +229,6 @@ export function ActivitiesPage() {
   const currentOrg = useMemo(() => orgs.find((o) => o.id === orgId), [orgs, orgId]);
   const currentPlace = useMemo(() => places.find((p) => p.id === placeId), [places, placeId]);
 
-  // Navegación
   const goPrev = () =>
     setCurrentMonth(({ year, month }) => ({ year, month: month === 1 ? 12 : month - 1 }));
   const goNext = () =>
@@ -272,15 +240,13 @@ export function ActivitiesPage() {
         : { year: PLANNING_YEAR, month: 1 },
     );
 
-  // Formulario
   const openCreate = (prefill?: string) => {
     setEditing(null);
     reset({
       name: '',
       description: '',
       activityDate:
-        prefill ??
-        `${currentMonth.year}-${String(currentMonth.month).padStart(2, '0')}-01`,
+        prefill ?? `${currentMonth.year}-${String(currentMonth.month).padStart(2, '0')}-01`,
       timeDefined: true,
       startTime: '09:00',
       status: 'PLANNED',
@@ -333,7 +299,9 @@ export function ActivitiesPage() {
           setConflicts(r.conflicts);
           return;
         }
-      } catch {}
+      } catch {
+        /* si falla el check, dejamos guardar */
+      }
     }
 
     setSaving(true);
@@ -372,22 +340,31 @@ export function ActivitiesPage() {
   };
 
   const confirmAction = async () => {
-    if (!confirmTarget || !confirmKind) return;
+    if (!confirmKind) return;
     setActing(true);
     try {
-      if (confirmKind === 'delete') {
+      if (confirmKind === 'delete' && confirmTarget) {
         await activitiesService.softDelete(confirmTarget.id);
         toast.success('Actividad eliminada');
-      } else {
+      } else if (confirmKind === 'restore' && confirmTarget) {
         await activitiesService.restore(confirmTarget.id);
         toast.success('Actividad restaurada');
+      } else if (confirmKind === 'purge' && confirmTarget) {
+        await activitiesService.purge(confirmTarget.id);
+        toast.success('Actividad eliminada permanentemente');
+      } else if (confirmKind === 'purge-all') {
+        const { deleted } = await activitiesService.purgeAll();
+        toast.success(`${deleted} actividades eliminadas permanentemente`);
       }
       setConfirmTarget(null);
       setConfirmKind(null);
       setSelected(null);
       await fetchMonth();
-    } catch {
-      toast.error('No se pudo completar la acción');
+    } catch (e: unknown) {
+      const msg =
+        (e as { response?: { data?: { message?: string } } }).response?.data?.message ??
+        'No se pudo completar la acción';
+      toast.error(msg);
     } finally {
       setActing(false);
     }
@@ -397,28 +374,35 @@ export function ActivitiesPage() {
 
   return (
     <section className="space-y-5">
-      {/* Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <p className="text-sm font-medium text-blue-600">Planeación anual</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">
-            Actividades
-          </h1>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950">Actividades</h1>
           <p className="mt-1 text-sm text-slate-500">
             {monthTotal} actividad(es) en {MONTHS[currentMonth.month - 1]} {currentMonth.year}
           </p>
         </div>
-        {canWrite && (
-          <Button
-            onClick={() => openCreate()}
-            icon={<Plus className="h-4 w-4" />}
-          >
-            Nueva actividad
-          </Button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {isAdmin && (
+            <Button
+              variant="danger"
+              onClick={() => {
+                setConfirmTarget({ id: 'all' } as Activity);
+                setConfirmKind('purge-all');
+              }}
+              icon={<Trash2 className="h-4 w-4" />}
+            >
+              Limpiar todo
+            </Button>
+          )}
+          {canWrite && (
+            <Button onClick={() => openCreate()} icon={<Plus className="h-4 w-4" />}>
+              Nueva actividad
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* Barra navegación + filtros */}
       <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm xl:flex-row xl:items-center xl:justify-between">
         <div className="flex items-center gap-1">
           <button
@@ -428,7 +412,7 @@ export function ActivitiesPage() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <h2 className="min-w-32.5 text-center text-sm font-bold text-slate-900">
+          <h2 className="min-w-[130px] text-center text-sm font-bold text-slate-900">
             {MONTHS[currentMonth.month - 1]} {currentMonth.year}
           </h2>
           <button
@@ -445,8 +429,9 @@ export function ActivitiesPage() {
             Hoy
           </button>
         </div>
+
         <div className="flex flex-1 flex-wrap gap-2 xl:justify-end">
-          <div className="relative min-w-45 flex-1 xl:max-w-55">
+          <div className="relative min-w-[180px] flex-1 xl:max-w-[220px]">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="search"
@@ -474,15 +459,21 @@ export function ActivitiesPage() {
           >
             <option value="">Todas las organizaciones</option>
             {orgs.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.name}
-              </option>
+              <option key={o.id} value={o.id}>{o.name}</option>
             ))}
           </select>
+          <label className="flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(e) => setShowDeleted(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-slate-300"
+            />
+            Mostrar eliminadas
+          </label>
         </div>
       </div>
 
-      {/* Leyenda */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="mr-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
           Estados
@@ -502,7 +493,6 @@ export function ActivitiesPage() {
         {loading && <span className="ml-auto text-xs text-slate-400">Cargando…</span>}
       </div>
 
-      {/* Cuadrícula */}
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50/80">
           {WEEKDAYS.map((d, i) => (
@@ -527,17 +517,12 @@ export function ActivitiesPage() {
                 key={cell.key}
                 onClick={() => setDayKey(cell.key)}
                 className={cn(
-                  'group relative min-h-25 border-b border-r border-slate-100 p-2 text-left transition hover:bg-slate-50/80 sm:min-h-30.5',
+                  'group relative min-h-[100px] border-b border-r border-slate-100 p-2 text-left transition hover:bg-slate-50/80 sm:min-h-[122px]',
                   !cell.inMonth && 'bg-slate-50/40',
                   isToday && 'bg-blue-50/30 ring-2 ring-inset ring-blue-500',
                 )}
               >
-                <div
-                  className={cn(
-                    'mb-2 flex justify-end',
-                    !cell.inMonth && 'opacity-40',
-                  )}
-                >
+                <div className={cn('mb-2 flex justify-end', !cell.inMonth && 'opacity-40')}>
                   <span
                     className={cn(
                       'grid h-7 w-7 place-items-center rounded-full text-xs font-semibold',
@@ -550,7 +535,6 @@ export function ActivitiesPage() {
                   </span>
                 </div>
 
-                {/* Desktop: chips */}
                 <div className="hidden space-y-1 sm:block">
                   {list.slice(0, 2).map((a) => (
                     <span
@@ -560,7 +544,10 @@ export function ActivitiesPage() {
                         setSelected(a);
                       }}
                       title={`${a.timeDefined && a.startTime ? a.startTime.slice(11, 16) + ' · ' : ''}${a.name}`}
-                      className="flex cursor-pointer items-center gap-1.5 truncate rounded-full border border-transparent bg-slate-50 px-2 py-1 text-left text-[10px] font-medium text-slate-600 transition hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:shadow-sm"
+                      className={cn(
+                        'flex cursor-pointer items-center gap-1.5 truncate rounded-full border border-transparent bg-slate-50 px-2 py-1 text-left text-[10px] font-medium text-slate-600 transition hover:-translate-y-0.5 hover:border-slate-200 hover:bg-white hover:shadow-sm',
+                        a.deletedAt && 'line-through opacity-60',
+                      )}
                     >
                       <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', STATUS[a.status].dot)} />
                       <span className="truncate">
@@ -576,13 +563,9 @@ export function ActivitiesPage() {
                   )}
                 </div>
 
-                {/* Móvil: dots */}
                 <div className="flex flex-wrap justify-end gap-1 sm:hidden">
                   {list.slice(0, 4).map((a) => (
-                    <span
-                      key={a.id}
-                      className={cn('h-2 w-2 rounded-full', STATUS[a.status].dot)}
-                    />
+                    <span key={a.id} className={cn('h-2 w-2 rounded-full', STATUS[a.status].dot)} />
                   ))}
                   {list.length > 4 && (
                     <span className="text-[9px] font-bold text-slate-400">+</span>
@@ -594,7 +577,6 @@ export function ActivitiesPage() {
         </div>
       </div>
 
-      {/* Modal del día */}
       {dayKey && (
         <Modal onClose={() => setDayKey(null)}>
           <div className="flex items-start justify-between">
@@ -602,9 +584,7 @@ export function ActivitiesPage() {
               <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
                 Agenda del día
               </p>
-              <h2 className="mt-1 text-2xl font-bold text-slate-950">
-                {formatLongDate(dayKey)}
-              </h2>
+              <h2 className="mt-1 text-2xl font-bold text-slate-950">{formatLongDate(dayKey)}</h2>
             </div>
             <button
               onClick={() => setDayKey(null)}
@@ -617,9 +597,7 @@ export function ActivitiesPage() {
 
           <div className="mt-6 space-y-3">
             {(filtered.get(dayKey) ?? []).length === 0 ? (
-              <p className="text-sm text-slate-500">
-                Sin actividades registradas para este día.
-              </p>
+              <p className="text-sm text-slate-500">Sin actividades registradas para este día.</p>
             ) : (
               (filtered.get(dayKey) ?? []).map((a) => (
                 <button
@@ -636,12 +614,7 @@ export function ActivitiesPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p
-                        className={cn(
-                          'text-sm font-bold text-slate-900',
-                          a.deletedAt && 'line-through',
-                        )}
-                      >
+                      <p className={cn('text-sm font-bold text-slate-900', a.deletedAt && 'line-through')}>
                         {a.name}
                       </p>
                       <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
@@ -692,7 +665,6 @@ export function ActivitiesPage() {
         </Modal>
       )}
 
-      {/* Modal de detalle */}
       {selected && (
         <Modal onClose={() => setSelected(null)}>
           <div className="flex items-start justify-between">
@@ -737,7 +709,7 @@ export function ActivitiesPage() {
 
           {selected.deletedAt && (
             <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-xs text-red-700 ring-1 ring-red-200">
-              Esta actividad está eliminada. Puedes restaurarla.
+              Esta actividad está eliminada. Puedes restaurarla o eliminarla permanentemente.
             </div>
           )}
 
@@ -754,35 +726,45 @@ export function ActivitiesPage() {
 
           {selected.description && (
             <div className="mt-5 rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Descripción
-              </p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Descripción</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">{selected.description}</p>
             </div>
           )}
 
           {selected.observations && (
             <div className="mt-3 rounded-xl bg-slate-50 p-4">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Observaciones
-              </p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Observaciones</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">{selected.observations}</p>
             </div>
           )}
 
           {canWrite && (
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
               {selected.deletedAt ? (
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setConfirmTarget(selected);
-                    setConfirmKind('restore');
-                  }}
-                  icon={<RotateCcw className="h-4 w-4" />}
-                >
-                  Restaurar
-                </Button>
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setConfirmTarget(selected);
+                      setConfirmKind('restore');
+                    }}
+                    icon={<RotateCcw className="h-4 w-4" />}
+                  >
+                    Restaurar
+                  </Button>
+                  {isAdmin && (
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        setConfirmTarget(selected);
+                        setConfirmKind('purge');
+                      }}
+                      icon={<Trash2 className="h-4 w-4" />}
+                    >
+                      Eliminar para siempre
+                    </Button>
+                  )}
+                </>
               ) : (
                 <>
                   <Button
@@ -809,7 +791,6 @@ export function ActivitiesPage() {
         </Modal>
       )}
 
-      {/* Modal formulario */}
       {formOpen && (
         <Modal onClose={() => { setFormOpen(false); setConflicts(null); }}>
           <div className="flex items-start justify-between">
@@ -941,15 +922,35 @@ export function ActivitiesPage() {
       )}
 
       <ConfirmDialog
-        open={Boolean(confirmTarget && confirmKind)}
-        title={confirmKind === 'delete' ? 'Eliminar actividad' : 'Restaurar actividad'}
+        open={Boolean((confirmTarget && confirmKind) || confirmKind === 'purge-all')}
+        title={
+          confirmKind === 'delete'
+            ? 'Eliminar actividad'
+            : confirmKind === 'restore'
+              ? 'Restaurar actividad'
+              : confirmKind === 'purge'
+                ? 'Eliminar permanentemente'
+                : 'Limpiar TODAS las actividades'
+        }
         message={
           confirmKind === 'delete'
             ? `¿Eliminar "${confirmTarget?.name}"? Podrás restaurarla después.`
-            : `¿Restaurar "${confirmTarget?.name}"?`
+            : confirmKind === 'restore'
+              ? `¿Restaurar "${confirmTarget?.name}"?`
+              : confirmKind === 'purge'
+                ? `¿Eliminar "${confirmTarget?.name}" PERMANENTEMENTE? Esta acción NO se puede deshacer.`
+                : `Esto eliminará TODAS las actividades de la base de datos. Esta acción NO se puede deshacer. ¿Continuar?`
         }
-        confirmLabel={confirmKind === 'delete' ? 'Eliminar' : 'Restaurar'}
-        variant={confirmKind === 'delete' ? 'danger' : 'primary'}
+        confirmLabel={
+          confirmKind === 'delete'
+            ? 'Eliminar'
+            : confirmKind === 'restore'
+              ? 'Restaurar'
+              : confirmKind === 'purge'
+                ? 'Eliminar para siempre'
+                : 'Sí, eliminar todo'
+        }
+        variant={confirmKind === 'restore' ? 'primary' : 'danger'}
         loading={acting}
         onConfirm={confirmAction}
         onCancel={() => { setConfirmTarget(null); setConfirmKind(null); }}
@@ -961,7 +962,7 @@ export function ActivitiesPage() {
 function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 z-60 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <div

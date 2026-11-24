@@ -37,6 +37,10 @@ export const activitiesService = {
     api.patch<Activity>(`/activities/${id}/delete`).then((r) => r.data),
   restore: (id: string) =>
     api.patch<Activity>(`/activities/${id}/restore`).then((r) => r.data),
+  purge: (id: string) =>
+    api.delete<{ deleted: boolean }>(`/activities/${id}/purge`).then((r) => r.data),
+  purgeAll: () =>
+    api.post<{ deleted: number }>('/activities/purge-all').then((r) => r.data),
   checkConflicts: (input: ConflictCheckInput) =>
     api
       .post<{ hasConflicts: boolean; conflicts: Conflict[] }>('/conflicts/check', input)
